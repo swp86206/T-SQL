@@ -1,0 +1,61 @@
+create database 教育部
+ON PRIMARY
+(
+NAME = 教育部F1 , /*改檔名*/
+FILENAME = 'C:\DB\edu.mdf'
+),
+(
+NAME = 教育部F2 , /*改檔名*/
+FILENAME = 'C:\DB\edu_2.ndf'
+)
+LOG ON 
+(
+NAME = 教育部 , /*改檔名*/
+FILENAME = 'C:\DB\edu.ldf'
+)
+
+===============================================
+
+sp_helpdb[教育部] --報告此資料庫相關資訊
+
+alter database [教育部]
+ADD FILE    /*修改用*/
+(
+NAME = 教育部F3 ,
+FILENAME = 'C:\DB\edu_3.ndf'
+)
+
+DROP DATABASE --DROP是整個移除，檔案都不見
+
+delete 訂閱記錄 --delete 是刪除記錄，檔案還在
+
+-- 工作 --> 右鍵-卸離  // 檔案都還在,SQL看不到
+-- 資料庫 --> 右鍵-附加 --> 加入,一路徑選取檔案  //把卸離的檔案再加回去
+
+============================================================================
+
+-- 確認資料庫
+IF  EXISTS (
+	SELECT name 
+		FROM sys.databases 
+		WHERE name = N'<Database_Name, sysname, Database_Name>'
+)
+
+==============================================================================
+--用範本總館新建資料庫的判斷式
+
+IF  EXISTS (
+	SELECT name 
+		FROM sys.databases   --到系統資料表去撈,有沒有'藏書閣'這個資料庫,有的話DROP掉
+		WHERE name = N'藏書閣'  --N為強烈的告訴SQL,此為雙碼(Uni code)
+)  --以上為判斷資料庫是否已存在
+DROP DATABASE 藏書閣  --到系統資料表去撈,有沒有'藏書閣'這個資料庫,有的話DROP掉
+GO 
+
+CREATE DATABASE 藏書閣  --再新建一個'藏書閣'資料庫 
+GO
+
+--資料庫已存在,則無法再新建,故用此方法判斷
+==============================================================================
+
+
