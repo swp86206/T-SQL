@@ -1,0 +1,179 @@
+EXEC msdb.dbo.sp_send_dbmail  --發信的程式碼
+@recipients = 'nchuho57@gmail.com', --收信mail
+@subject = '客戶資料', -- 郵件主旨
+@query = 'select * from 客戶', --查詢指令,把客戶table資料拿出來
+@execute_query_database = '練習10' -- 所選取的資料庫
+
+========================================================
+
+USE [練習09]
+GO
+
+SELECT sum(數量)  FROM [dbo].[出貨記錄]
+
+where [客戶名稱] = '天天書局'
+---------------------------------
+
+select 客戶名稱,[書名], sum(數量)as總訂購數
+from 出貨記錄
+group by 客戶名稱,[書名]
+order by 客戶名稱
+---------------------------
+
+SELECT *  FROM [dbo].[出貨記錄]
+
+select  DATEPART (MONTH,'2016-10-6')  FROM [dbo].[出貨記錄]
+
+---------------------------------------------
+SELECT 數量  FROM [dbo].[出貨記錄]
+
+select datepart(month,[日期]) as 月份,客戶名稱 ,sum(數量) as 總訂購數
+from 出貨記錄
+group by datepart(month,[日期]) ,客戶名稱 
+order by datepart(month,[日期])
+
+--------------------------------------------------------
+SELECT 客戶名稱,書名,COUNT(數量)AS 訂購數  FROM [dbo].[出貨記錄]
+group by 客戶名稱 ,書名
+
+SELECT *  FROM [dbo].[出貨記錄]
+----------------------------------------------
+SELECT 客戶名稱,書名,SUM(數量)AS 訂購數  FROM [dbo].[出貨記錄]
+group by 客戶名稱 ,書名
+HAVING SUM (數量)>5
+ORDER BY SUM (數量)
+------------------------------------------------------
+select datepart(month,[日期]) as 月份,客戶名稱 ,sum(數量) as 總訂購數
+from 出貨記錄
+group by datepart(month,[日期]) ,客戶名稱 
+order by datepart(month,[日期])
+
+---------------------------------------------------
+select datepart(month,[日期]) as 月份,客戶名稱 ,sum(數量) as 總訂購數
+from 出貨記錄
+group by datepart(month,[日期]) ,客戶名稱 WITH ROLLUP
+
+select datepart(month,[日期]) as 月份,客戶名稱 ,sum(數量) as 總訂購數
+from 出貨記錄
+group by datepart(month,[日期]) ,客戶名稱 WITH CUBE
+
+select datepart(month,[日期]) as 月份,客戶名稱 ,sum(數量) as 總訂購數
+from 出貨記錄
+group by datepart(month,[日期]) ,客戶名稱 
+
+---------------------------------------------
+select datepart(month,[日期]) as 月份,客戶名稱 ,sum(數量) as 總訂購數
+from 出貨記錄
+group by GROUPING SETS 
+(
+(datepart(month,[日期])),
+ (datepart(month,[日期]),客戶名稱 ),
+ ()
+)
+----------------------------------
+
+
+GO
+=========================================================================
+	JOIN
+=======================
+
+select * from 訂單
+
+select * from 客戶
+
+------------------------------迪卡爾成積
+select 訂單.* ,客戶.*
+ from 訂單,客戶
+ where 訂單.客戶編號 = 客戶.客戶編號
+
+ ------------------------------- JOIN
+ select 訂單.* ,客戶.*
+ from 訂單 inner join 客戶
+ on 訂單.客戶編號 = 客戶.客戶編號
+
+ select [訂單編號],[下單日期],[客戶名稱],[電話]
+ from 訂單 inner join 客戶
+ on 訂單.客戶編號 = 客戶.客戶編號  --  條件相等,等結合
+ ---------------------------------------
+
+select * from 旗旗公司
+
+select * from 標標公司
+
+select 旗旗公司.產品名稱, 旗旗公司.價格 as 旗旗售價,標標公司.價格 AS 標標售價
+from 旗旗公司 left join 標標公司
+on 旗旗公司.產品名稱 = 標標公司.產品名稱
+
+select 標標公司.產品名稱, 旗旗公司.價格 as 旗旗售價,標標公司.價格 AS 標標售價
+from 旗旗公司 right join 標標公司
+on 旗旗公司.產品名稱 = 標標公司.產品名稱
+
+select 旗旗公司.產品名稱, 旗旗公司.價格 as 旗旗售價,標標公司.價格 AS 標標售價
+from 旗旗公司 inner join 標標公司
+on 旗旗公司.產品名稱 = 標標公司.產品名稱
+
+select 旗旗公司.產品名稱, 旗旗公司.價格 as 旗旗售價,標標公司.產品名稱,標標公司.價格 AS 標標售價
+from 旗旗公司 full join 標標公司
+on 旗旗公司.產品名稱 = 標標公司.產品名稱
+----------------------------------------------------------
+select 旗旗公司.產品名稱, 旗旗公司.價格 as 旗旗售價,標標公司.價格 AS 標標售價
+from 旗旗公司, 標標公司
+where 旗旗公司.產品名稱 = 標標公司.產品名稱
+
+====================================================================
+
+--把員工資料表的主管編號改成主管名稱
+
+select * from 員工
+
+select A.編號,A.姓名,A.性別,A.地址,A.電話,A.職位,ISNULL (B.姓名,'無') as 主管名稱
+from 員工 as A left join 員工 as B 
+on A.主管編號 = B.編號 
+
+===============================================
+
+SELECT 聯絡人 AS 邀請名單, 地址
+FROM 合作廠商
+UNION
+SELECT 聯絡人, 地址
+FROM 客戶
+UNION 
+SELECT '王大砲', '台北市南京東路三段34號5樓' --多補充一筆資料用select
+ORDER BY 聯絡人
+
+============================================================
+--旗旗公司價格大於495的產品,標標公司賣多少
+
+SELECT * 
+FROM 標標公司 
+WHERE EXISTS ( SELECT * 
+               FROM 旗旗公司 
+               WHERE 產品名稱 = 標標公司.產品名稱
+                     AND 價格 > 495) 
+===============================================================
+-------DECLARE @local_variable ----------
+變數是利用 DECLARE 陳述式宣告在批次或程序的主體中，並利用 SET 或 SELECT 陳述式來指派值。
+資料指標變數可以是利用這個陳述式來宣告，且可以搭配其他與資料指標相關的陳述式來使用。
+在宣告之後，所有變數都會初始化成 NULL，除非在宣告中有提供值。
+----------------------------------------
+
+DECLARE @number int
+DECLARE @string char(20) 
+SET @number = 100
+SET @string = '天天書局'
+SELECT @number AS 數字, @string AS 字串
+
+===================================================================
+
+-- 資料轉換90度  (像excel 的置換功能)
+
+
+SELECT 書名, 天天書局, 大雄書局
+FROM 
+   (SELECT 客戶名稱, 書名, 數量
+    FROM 出貨記錄) as Src 
+    PIVOT (SUM(數量) 
+           FOR 客戶名稱 
+           IN (天天書局, 大雄書局)) as Piv
+=================================================
