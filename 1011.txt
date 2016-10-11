@@ -65,3 +65,202 @@ WHILE @id < 500
 GO
 =====================================================================
 
+DECLARE @count INT 
+SET @count = 0 
+WHILE @count < 5  /* 此迴圈最多做 5 次 */
+  BEGIN 
+	INSERT 員工記錄 (異動日期, 員工編號, 薪資) 
+	VALUES ('2012/10/6', 15, 30000) 
+	IF @@error = 0 BREAK  /* 如果成功即跳出迴圈 */
+	SET @count = @count + 1 
+	WAITFOR DELAY '00:00:05'  /* 等待 5 秒 */  --WAITFOR ''
+  END 
+
+=======================================================================
+
+DECLARE @tablename varchar(20)
+WHILE 1 = 1
+   BEGIN
+       SELECT @tablename = 暫存資料表名稱 /* 從 『暫存資料表清單』 資料表
+                                          中取得 『暫存資 */ 
+       FROM 暫存資料表清單                /* 料表名稱』 欄位內的值, 並且指
+                                          定給 @tablename */
+       WHERE 建立日期 < getdate() -7
+      
+       IF @@ROWCOUNT > 0    /* @@ROWCOUNT 儲存著傳回的記錄筆數 */ -- @@ROWCOUNT 看有沒有撈到資料
+          BEGIN
+             EXEC ('DROP TABLE ' + @tablename)
+             DELETE 暫存資料表清單
+             WHERE 暫存資料表名稱 = @tablename
+          END
+       ELSE
+          BREAK
+   END
+
+GO
+
+=================================================================================
+
+--如果是 null 就用0取代
+
+IF ISNULL((SELECT SUM(數量) FROM 訂單細目 
+           WHERE 書籍編號 = 123), 0) < 100 
+    PRINT '訂購數量未達標準' 
+ELSE 
+    PRINT '訂購數量高於標準' 
+
+GO
+===================================================================================
+
+使用者自訂錯誤訊息儲存在 SQL Server Database Engine 的執行個體中。
+使用 sp_addmessage 儲存的訊息，可以透過 [sys.messages] 目錄檢視來檢視。 
+
+
+EXEC sp_addmessage  66666, 7, 'Monsters!', @lang = 'us_english'
+GO
+EXEC sp_addmessage 66666, 7, '有怪獸!有怪獸!', @lang = '繁體中文'
+GO
+RAISERROR (66666, 7, 1)
+
+GO
+
+--- 要觸發中文訊息，要先有英文訊息，所以要寫兩次，且嚴重性必須相符。
+
+======================================================================================
+
+RAISERROR ('發生嚴重錯誤！', 20, 1) WITH LOG -- RAISERROR出來的錯誤訊息是50000, WITH LOG是寫入 Windows 應用程式記錄檔中
+
+GO
+
+==============================================================================================
+
+THROW (Transact-SQL)
+
+在 SQL Server 2012 中引發例外狀況，並將執行轉移至 TRY…CATCH 建構的 CATCH 區塊。
+
+==================================================================================
+
+
+SELECT * FROM 部門 
+
+MERGE 部門 t             -- 目的資料表 (要被更新的資料表) -- 在目標資料表上執行插入、更新或刪除作業 --兩個資料表作比對,B資料表沒有的,把A資料值複寫過去
+USING 部門草案 s         -- 來源資料  (參考的)
+ON t.ID = s.ID           -- 指定二個資料表的撮合 (JOIN) 條件 --參考欄位
+WHEN MATCHED AND t.主管 <> s.主管 THEN  -- 條件符合且主管不同時, 就修改主管
+     UPDATE 
+     SET t.主管 = s.主管  -- 把s.主管 放進 t.主管
+WHEN NOT MATCHED BY TARGET THEN  -- 不在目的資料中的(但在來源資料中), 就新增
+     INSERT (ID, 部門名稱, 主管)
+     VALUES (s.ID, s.部門名稱, s.主管)
+WHEN NOT MATCHED BY SOURCE THEN  -- 不在來源資料中的(但在目的資料中), 就刪除 (舊的有,新的沒有,把舊的刪掉)
+     DELETE
+OUTPUT $action,          -- OUTPUT 另外秀出已完成的動作
+	deleted.ID, deleted.部門名稱, deleted.主管,
+	inserted.ID, inserted.部門名稱, inserted.主管;
+
+SELECT * FROM 部門
+
+GO
+
+=====================================================================================
+
+參考其他資料庫
+
+SELECT *
+FROM FLAG2.練習13.dbo.書籍  --FLAG2 伺服器  練習13 資料庫 dbo.書籍 ... -- 但須先設定好 LINK SERVER (伺服器物件，連結的伺服器）
+
+
+GO 
+===========================================================================================
+
+sp_helptext sp_configure　　-- sp_helptext 看出 sp_.... 的功能
+
+===========================================================================================
+
+EXEC sp_configure 'show advanced options', 1 --用此看出 xp_.....  顯示出沒有顯示的其他選項
+RECONFIGURE  --執行
+EXEC sp_configure 'xp_cmdshell', 1  -- 原本預設為0
+RECONFIGURE  --執行
+
+==================================================================================
+
+練習14 P14-9a ~ 練習14 P14-10
+
+----預儲程序---
+==========================================================
+
+CREATE PROCEDURE 取得客戶地址 
+@客戶編號 int, 
+@地址 varchar(100) OUTPUT 
+AS SELECT @地址 = 地址 
+     FROM 客戶 
+     WHERE 客戶編號 = @客戶編號 
+IF @@rowcount > 0 
+     RETURN 0   /* 如果查詢到則傳回 0 */ 
+ELSE 
+     RETURN 1   /* 沒有查到就傳回 1 */ 
+GO 
+DECLARE @ret int, @地址 varchar(100) 
+EXEC @ret = 取得客戶地址 4, @地址 OUTPUT  /* 用 @ret 接收傳回值 */  --是接 RETURN的傳回值0,1
+IF @ret = 0 
+     PRINT @地址 
+ELSE 
+     PRINT '找不到！' 
+
+GO 
+================================================================================
+
+/* 建立 MyProc5 預存程序群組的第 1 個程序 */  --用分號去分哪幾組
+CREATE PROCEDURE MyProc5;1 
+AS SELECT * 
+     FROM 旗旗公司 
+GO
+
+/* 建立 MyProc5 預存程序群組的第 2 個程序 */ 
+CREATE PROCEDURE MyProc5;2 
+AS 
+SELECT * 
+     FROM 標標公司 
+GO 
+MyProc5;1
+EXEC MyProc5;2
+
+GO 
+==============================================================
+
+--有三的參數，只少要寫出第一個
+
+CREATE PROCEDURE test 
+@a int, 
+@b int = NULL, 
+@c int = 3 
+AS 
+SELECT @a, @b, @c 
+GO 
+
+EXEC test     /* 錯誤, 第一個參數不可省 */ 
+GO 
+EXEC test 1  /* OK, 第 2、3 參數用預設值 */ 
+GO 
+EXEC test 1, DEFAULT      /* OK, 可用 DEFAULT 表示使用預設值 */ 
+GO
+EXEC test 1, DEFAULT, 5  /* OK */ 
+GO 
+EXEC test 1, 2, 5                 /* OK */ 
+GO 
+
+======================================================================
+--有三的參數，要寫出第一個,不然會出錯
+
+EXEC test 1, @c = 2
+GO
+EXEC test @c = 2, 1
+GO
+EXEC test @c = 5
+
+GO 
+
+===========================================================
+
+
+
