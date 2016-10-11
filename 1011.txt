@@ -1,0 +1,67 @@
+DECLARE @mybook TABLE ( 書籍編號 int PRIMARY KEY, 書籍名稱 varchar(50) ) --定義TABLE 變數 (臨時的資料表,比#更沒有存在)
+
+INSERT @mybook
+SELECT 書籍編號, 書籍名稱
+FROM 書籍
+WHERE 單價 >= 460
+
+SELECT * FROM @mybook
+
+UPDATE @mybook
+SET 書籍名稱 += '(附CD)'
+
+DELETE @mybook
+WHERE 書籍編號 = 7
+
+-- 必須使用資料表別名來指示欄位
+SELECT m.書籍編號, m.書籍名稱, 單價 -- 使用m 別名,是因為不可使用變數 @mybook
+FROM @mybook m JOIN 書籍 
+     ON m.書籍編號 = 書籍.書籍編號
+GO
+
+SELECT 書籍編號, 書籍名稱
+INTO @mybook             -- 語法錯誤！不可用在 INTO 中
+FROM 書籍
+
+GO
+==================================================================
+
+IF 1000 > ALL (SELECT 單價 FROM 書籍) --ALL 撈出後全部都須符合,ANY 則是部分符合就可以
+   PRINT '沒有任何書籍超過 1000 元' 
+
+GO
+
+==========================================================================
+-- IF EXISTS 判斷存不存在
+
+IF EXISTS (SELECT * FROM 書籍 WHERE 書籍編號 = '1001') 
+   PRINT '1001 的名稱已輸入' 
+ELSE 
+   PRINT '1001 的名稱未輸入'
+
+GO
+=====================================================================
+
+DECLARE @id int, @name varchar(50), @price int, @count int 
+SET @id = 0 
+SET @count = 1
+
+WHILE @id < 500 
+   BEGIN 
+      SET @id = @id + 1 
+      SELECT @name = 書籍名稱, @price = 單價
+         FROM 書籍 WHERE 書籍編號 = @id
+      IF @@ROWCOUNT = 0 /* @@ ROWCOUNT 中會儲存著 */ --@@ ROWCOUNT會傳回最後一筆記錄,若 @@ ROWCOUNT = 0,為最後一次的結尾
+         BEGIN          /* SELECT 傳回的記錄筆數 */
+             PRINT '*** The End ***'
+             BREAK --強制跳出
+         END 
+      IF @price >= 400 CONTINUE
+      PRINT CAST(@price AS CHAR(4)) + ' -- ' +@name
+      IF @count % 3 = 0 PRINT '......'  --%  取餘數
+      SET @count = @count + 1
+   END
+
+GO
+=====================================================================
+
